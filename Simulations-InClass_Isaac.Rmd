@@ -250,7 +250,7 @@ The steps of this process are:
   e. The upper bound of a 95% CI will be the 0.975 percentile
 
 ```{r}
-#boot_ci<-function(data,funct){
+boot_ci<-function(data,funct){
   samp.stat<-rep(NA,1000)
   for (i in 1:1000){
   samp<-sample(data,length(data),replace=TRUE)
@@ -261,9 +261,7 @@ The steps of this process are:
   output<-paste("(",low.bound,",",high.bound,")")
   output
   
-  output<-list(statistic=stat, CI=st)
-  
-#}
+}
 ```
 
 
