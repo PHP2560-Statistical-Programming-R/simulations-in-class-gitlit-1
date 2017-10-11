@@ -250,15 +250,20 @@ The steps of this process are:
   e. The upper bound of a 95% CI will be the 0.975 percentile
 
 ```{r}
-boot_ci<-function(data,funct=data.sample){
+#boot_ci<-function(data,funct){
+  samp.stat<-rep(NA,1000)
+  for (i in 1:1000){
   samp<-sample(data,length(data),replace=TRUE)
-  samp.stat<-funct(samp)
-  vector.stat<-replicate(1000,samp.stat)
-  low.bound<-quantile(vector.stat,probs=0.025)
-  high.bound<-quantile(vector.stat,probs=0.975)
+  samp.stat[i]<-funct(samp)
+  }
+  low.bound<-quantile(samp.stat,probs=0.025)
+  high.bound<-quantile(samp.stat,probs=0.975)
   output<-paste("(",low.bound,",",high.bound,")")
   output
-}
+  
+  output<-list(statistic=stat, CI=st)
+  
+#}
 ```
 
 
@@ -268,6 +273,7 @@ Make a function called `boot_ci` which calculates the 95% confidence interval in
 5. For problems 3b and 3c, you calculated a mean value. Because you saved these final results in a vector, use the bootstrap to estimate the variance of the return in each case for your final answer. Once you have these results, which game has the smaller variance in returns?
 
 ```{r}
-
+data<-replicate(100,markov(0.489,0.01))
+boot_ci(data,var)
 ```
 
