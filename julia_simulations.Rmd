@@ -1,0 +1,314 @@
+---
+title: "Simulations In-Class Project"
+date: "Due October 13, 2017 at 11:59pm"
+output:
+  html_document
+
+
+---
+
+<style type="text/css">
+.table {
+
+    width: 80%;
+    margin-left:10%; 
+    margin-right:10%;
+}
+</style>
+```{r,setup, echo=FALSE, cache=TRUE}
+## numbers >= 10^5 will be denoted in scientific notation,
+## and rounded to 2 digits
+options(scipen = 3, digits = 3)
+```
+
+
+
+
+#Project Goals:
+
+
+With this project we will simulate a famous probability problem. This will not require knowledge of probability or statistics but only the logic to follow the steps in order to simulate this problem. This is one way to solve problems by using the computer. 
+
+ 1. **Gambler's Ruin**: Suppose you have a bankroll of $1000 and make bets of $100 on a fair game. By simulating the outcome directly for at most 5000 iterations of the game (or hands), estimate:
+    a. the probability that you have "busted" (lost all your money) by the time you have placed your one hundredth bet.
+```{r}
+set.seed(10)
+game<-function(bet, bankroll, p, n){
+  busted=0
+  while(bet<= bankroll & busted < n){
+    result = runif(1)
+    if (result>p){
+      bankroll=bankroll+bet
+    } else{
+      bankroll= bankroll-bet
+    }
+    busted=busted+1
+    if(bet>bankroll) {break}
+  }
+  return(busted)
+}
+
+trialn<-10000
+bet<-100
+bankroll<-1000
+p<-0.5
+n<-5000
+res<-replicate(trialn, game(bet, bankroll, p, n))
+
+dur100<- length(which(res<=100))
+prob.a<-dur100/trialn
+prob.a
+```
+
+    b. the probability that you have busted by the time you have placed your five hundredth bet by simulating the outcome directly. 
+```{r}
+dur500<-length(which(res<=500))
+prob.b<-dur500/trialn
+prob.b
+```
+
+    c. the mean time you go bust, given that you go bust within the first 5000 hands.
+```{r}
+duration.c<-res[!res==5000]
+mean.time<-mean(duration.c)
+mean.time
+```
+
+    d. the mean and variance of your bankroll after 100 hands (including busts).
+```{r}
+bankroll.d<-rep(NA,n)
+for (j in 1:n){
+  x<-bankroll
+for (i in 1:100){
+if(x!=0){
+x<-x+100*sample(c(-1,1),1,replace=TRUE,prob=c(0.5,0.5))
+}}
+bankroll.d[j]<-x
+}
+mean.d<-mean(bankroll.d)
+var.d<-var(bankroll.d)
+mean.d
+var.d
+```
+
+    e. the mean and variance of your bankroll after 500 hands (including busts).
+```{r}
+bankroll.d<-rep(NA,n)
+for (j in 1:n){
+  x<-bankroll
+for (i in 1:500){
+if(x!=0){
+x<-x+500*sample(c(-1,1),1,replace=TRUE,prob=c(0.5,0.5))
+}}
+bankroll.d[j]<-x
+}
+mean.d<-mean(bankroll.d)
+var.d<-var(bankroll.d)
+mean.d
+var.d
+```
+
+ 
+Note: you *must* stop playing if your player has gone bust. How will you handle this in the `for` loop?
+
+
+2. Repeat the previous problem with betting on black in American roulette, where the probability of winning on any spin is 18/38 for an even payout.
+```{r}
+game<-function(bet, bankroll, p, n){
+  busted=0
+  while(bet<= bankroll & busted < n){
+    result = runif(1)
+    if (result>p){
+      bankroll=bankroll+bet
+    } else{
+      bankroll= bankroll-bet
+    }
+    busted=busted+1
+    if(bet>bankroll) {break}
+  }
+  return(busted)
+}
+
+trialn<-10000
+bet<-100
+bankroll<-1000
+p<-18/38
+n<-5000
+res<-replicate(trialn, game(bet, bankroll, p, n))
+
+dur100<- length(which(res<=100))
+prob.2a<-dur100/trialn
+prob.2a
+
+dur500<-length(which(res<=500))
+prob.2b<-dur500/trialn
+prob.2b
+
+duration.c<-res[!res==5000]
+mean.time<-mean(duration.c)
+mean.time
+```
+
+```{r}
+bankroll.d<-rep(NA,n)
+for (j in 1:n){
+  x<-bankroll
+for (i in 1:100){
+if(x!=0){
+x<-x+100*sample(c(-1,1),1,replace=TRUE,prob=c(0.47,0.53))
+}}
+bankroll.d[j]<-x
+}
+mean.d<-mean(bankroll.d)
+var.d<-var(bankroll.d)
+mean.d
+var.d
+```
+```{r}
+bankroll.d<-rep(NA,n)
+for (j in 1:n){
+  x<-bankroll
+for (i in 1:500){
+if(x!=0){
+x<-x+500*sample(c(-1,1),1,replace=TRUE,prob=c(0.47,0.53))
+}}
+bankroll.d[j]<-x
+}
+mean.2d<-mean(bankroll.d)
+var.2d<-var(bankroll.d)
+mean.2d
+var.2d
+```
+
+
+
+
+
+3. **Markov Chains**. Suppose you have a game where the probability of winning on your first hand is 48%; each time you win, that probability goes up by one percentage point for the next game (to a maximum of 100%, where it must stay), and each time you lose, it goes back down to 48%. Assume you cannot go bust and that the size of your wager is a constant $100.
+    a. Is this a fair game? Simulate one hundred thousand sequential hands to determine the size of your return. Then repeat this simulation 99 more times to get a range of values to calculate the expectation.
+```{r}
+MarkovChain=function(bet,bankroll,p)
+{
+  k=0
+  prob<-p
+  while(bet>0) {
+    ProbVal=runif(1)
+    if(ProbVal <= p)
+    {
+      bankroll = bankroll +bet
+      p = p+0.01
+    }else{
+      bankroll = bankroll-bet
+      p = prob
+    }
+    k=k+1
+    if(k==100000){break}
+    if(bankroll < bet){break}
+  }
+  return(bankroll)
+}
+
+size = numeric()
+s = 100
+for(i in 1:s)
+{
+  nextb = MarkovChain(100,900,0.48)
+  size = c(size,nextb)
+}
+mean(size)
+
+```
+
+    b. Repeat this process but change the starting probability to a new value within 2% either way. Get the expected return after 100 repetitions. Keep exploring until you have a return value that is as fair as you can make it. Can you do this automatically?
+```{r}
+proportion=numeric()
+for (j in 1:20){
+  size=numeric()
+  s = 100
+for(i in 1:s)
+{
+  nextb = MarkovChain(100,900,0.46+0.002*j)
+  size = c(size,nextb)
+}
+  nextproportion=length(which(size==0))/100
+  proportion.3b=c(proportion,nextproportion)
+}
+proportion.3b
+```
+
+    c. Repeat again, keeping the initial probability at 48%, but this time change the probability increment to a value different from 1%. Get the expected return after 100 repetitions. Keep changing this value until you have a return value that is as fair as you can make it. 
+```{r}
+MarkovChain.2=function(bet,bankroll,p,increment)
+{
+  k=0
+  prob<-p
+  while(bet>0) {
+    ProbVal=runif(1)
+    if(ProbVal <= p)
+    {
+      bankroll = bankroll +bet
+      p = p+increment
+    }else{
+      bankroll = bankroll-bet
+      p = prob
+    }
+    k=k+1
+    if(k==100000){break}
+    if(bankroll < bet){break}
+  }
+  return(bankroll)
+}
+
+proportion = numeric()
+for (z in 1:20){
+size=numeric()
+s = 100
+for(i in 1:s)
+{
+  nextb = MarkovChain.2(100,900,0.48,0.002*z)
+  size = c(size,nextb)
+}
+nextproportion=length(which(size==0))/100
+proportion.3c=c(proportion,nextproportion)
+}
+proportion.3c
+```
+
+
+
+4. Creating a Bootstrap function. There is a particular concept called [bootstrapping]
+(https://en.wikipedia.org/wiki/Bootstrapping_(statistics)) where we can easily create 95% confidence intervals, even for complex estimators.
+
+The steps of this process are:
+
+  a. Draw a sample, with replacement, from your data which is the same length of your data.
+```{r}
+nreps=1000
+funct=mean
+boot_ci<-function(data, funct, nreps){
+  boot_est<-vector(mode="numeric", length=length(nreps))
+   for(i in 1:nreps){
+  datasample<-sample(data, length(data), replace = TRUE, prob = NULL)
+   boot_est[i]<-funct(datasample)
+   }
+  boot_low<-quantile(boot_est,0.025)
+  boot_high<-quantile(boot_est, 1-0.025)
+  return(boot_est)
+}
+```
+
+  b. Calculate the statistic of interest on this boostrap sample (ie mean, variance, regression,...)
+
+  c. Peform steps 1:2 at least 1000 times over until you have a vector of your statistics. 
+  d. The lower bound of a 95% CI will be the 0.025 percentile
+
+  e. The upper bound of a 95% CI will be the 0.975 percentile
+
+Make a function called `boot_ci` which calculates the 95% confidence interval in this manner. 
+
+5. For problems 3b and 3c, you calculated a mean value. Because you saved these final results in a vector, use the bootstrap to estimate the variance of the return in each case for your final answer. Once you have these results, which game has the smaller variance in returns?
+```{r}
+boot_ci(proportion.3b, funct = var, nreps = 100)
+boot_ci(proportion.3c, funct = var, nreps = 100)
+```
+
