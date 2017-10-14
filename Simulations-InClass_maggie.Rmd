@@ -1,6 +1,7 @@
 ---
 title: "Simulations In-Class Project"
 date: "Due October 13, 2017 at 11:59pm"
+author: "Maggie Matsui"
 output:
   html_document
 
