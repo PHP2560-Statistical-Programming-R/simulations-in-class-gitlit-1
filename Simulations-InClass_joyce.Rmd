@@ -482,4 +482,4 @@ CI<-upper-lower
 data<-replicate(100,Markov(0.48))
 boot_ci(data,1000,var)
 ```
- 
+  
